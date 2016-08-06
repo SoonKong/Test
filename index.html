@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=640, initial-scale=0.5,maximum-scale=0.5">
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>KK馆微商城</title><link href="/res/kk_wsc/css/page.css" media="screen" rel="stylesheet" type="text/css" />
+    <link href="/res/kk_wsc/css/newpage.css" media="screen" rel="stylesheet" type="text/css" />
+    <link href="/res/commerce/css/emoji.css" media="screen" rel="stylesheet" type="text/css" />
+    <link href="/res/common/js/artDialog/skins/green.css" media="screen" rel="stylesheet" type="text/css" /><script type="text/javascript" src="/res/common/js/jquery.js"></script>
+    <script type="text/javascript" src="/res/common/plugins/jquery-cookie/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/res/common/js/jquery.lazyload.min.js"></script>
+    <script type="text/javascript" src="/res/kk_wsc/js/new/public.js"></script>
+    <script type="text/javascript" src="/res/kk_wsc/js/kkcart.js"></script>
+    <script type="text/javascript" src="/res/kk_wsc/js/minTips.min.js"></script><script> var _hmt = _hmt || []; (function() {var hm = document.createElement("script"); hm.src = "//hm.baidu.com/hm.js?d771564a2e5226e1019cf6d623f266bf"; var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(hm, s); })(); </script></head>
+<body>
+<div class="top02">
+    <h2></h2>
+    <a class="btnr" href="javascript:window.history.go(-1);"><i></i><em></em></a>
+</div>	<script type="text/javascript" src="/res/common/js/jquery.js"></script>
+<p>
+    <input type="button" id="enter" value="我是微信支付" onclick="InitPage('wxpaysdk');"
+    />
+    <input type="button" id="enter" value="我是支付宝啊" onclick="InitPage('aliPaysdk');"
+    />
+    <input type="button" id="enter" value="我是余额啊" onclick="InitPage('wallet');"
+    />
+    <input type="button" id="enter" value="我是招行啊" onclick="InitPage('cmbbanksdk');"
+    />
+    <input type="button" id="enter" value="我是复制啊" onclick="JieSheng('dawangbibi');"
+    />
+</p>
+<script>
+    var default_data = {
+        error: "1"
+    };
+
+    var connectMerchantJSBridge = function (callback) {
+        try {
+            if (window.WebViewJavascriptBridge) {
+                callback(WebViewJavascriptBridge);
+            } else {
+                document.addEventListener("WebViewJavascriptBridgeReady", function () {
+                    callback(WebViewJavascriptBridge);
+                }, false);
+            }
+        } catch (ex) {
+        }
+    };
+
+    var cmbMerchantBridge = {
+        initSignNet: function (payData, name) {
+            if (!payData) {
+                payData = default_data;
+            }
+            connectMerchantJSBridge(function (bridge) {
+                if (typeof bridge === "undefined") {
+                    return;
+                }
+                bridge.callHandler(name, JSON.stringify(payData));
+            });
+        },
+    };
+
+    /*app native调用本页面方法*/
+    connectMerchantJSBridge(function (bridge) {
+        bridge.init(function (message, responseCallback) {
+
+        });
+
+        bridge.registerHandler("clickShare", function (data, responseCallback) {
+            responseCallback("call share");
+            /*弹窗*/
+            dialog();
+        });
+
+        bridge.registerHandler("payStatus", function (data, responseCallback) {
+            responseCallback("receive payStatus");
+            <!-- 这里进行支付操作,data: success：成功，error：失败 -->
+        });
+
+        bridge.registerHandler("makeMoreProfit", function (data, responseCallback) {
+            responseCallback("receive makeMoreProfit");
+            <!-- 这里进行赚更多的操作，例如弹出提示框 -->
+        });
+    })
+
+
+    window.cmbMerchantBridge = cmbMerchantBridge;
+
+    function InitPage(type) {
+        var objData = new datas();
+        var payData = objData.payData;
+        payData.payment_type = type;
+        try {
+            cmbMerchantBridge.initSignNet(payData, "initSignNetPay");
+        } catch (ex) {
+        }
+    }
+
+     //公众号
+    function JieSheng(type) {
+        var objData = new datas();
+        var wxData = objData.wxData;
+        wxData.jie_sheng = type;
+        try {
+            cmbMerchantBridge.initSignNet(wxData, "initSignNetJieSheng");
+        } catch (ex) {
+        }
+    }
+
+    function Share(type) {
+        var objData = new datas();
+        var shareData = objData.shareData;
+        if (type == "pic") {
+            shareData.imgurl = objData.shareImgurl;
+            shareData.type = "pyq_ic";
+        } else if (type == "url") {
+            shareData.url = objData.shareUrl;
+            shareData.type = "pyq";
+        }
+        try {
+            cmbMerchantBridge.initSignNet(shareData, "initSignNetShare");
+        } catch (ex) {
+        }
+    }
+
+
+    /*弹窗*/
+    function dialog() {
+        Share('url');
+    }
+
+
+    <!-- 按钮开关 -->
+    $(function () {
+        var objData = new datas();
+        var handleData = objData.handleData;
+        cmbMerchantBridge.initSignNet(handleData, "jsHandle");
+    })
+
+    <!-- 赚更多开关 -->
+    $(function () {
+        var objData = new datas();
+        var handleData = objData.handleData;
+        cmbMerchantBridge.initSignNet(handleData, "makeMoreProfit");
+    })
+
+    function datas() {
+        this.shareUrl = "http://www.kkguan.com";
+        this.shareImgurl = "http://www.kkguan.com/res/upload/image/source/bd/97/bd97e3348fd40a598f1943fa6475ee87.jpg";
+
+        this.shareData = {
+            title: "hello share title",
+            content: "hello share content",
+            imgurl: "",
+            url: "",
+            type: ""
+        };
+
+        this.payData = {
+            payment_type: "wxpaysdk",
+            out_trade_no: "1470468650798"
+        };
+
+        this.handleData = {
+            status: "ok",
+            url: "http://www.baidu.com"
+        };
+
+          this.wxData = {
+            jie_sheng: "dawangok"
+        }
+    }
+
+</script>
+
+</html>    <!--/尾部浮动导航 -->
+<div class="footnav">
+    <dl class="on">
+        <a href="/wxkkg">
+            <dt><i class="nav_icon01"></i></dt>
+            <dd>购物</dd>
+        </a>
+    </dl>
+    <dl>
+        <a href="/wxkkg/category/index">
+            <dt><i class="nav_icon02"></i></dt>
+            <dd>分类</dd>
+        </a>
+    </dl>
+    <dl>
+        <a href="/wxkkg/cart/index">
+            <dt><i class="nav_icon03"><em id="cartcount" style="display: none;">0</em></i></dt>
+            <dd>购物车</dd>
+        </a>
+    </dl>
+    <dl>
+        <a href="/wxkkg/member/index">
+            <dt><i class="nav_icon04"></i></dt>
+            <dd>个人中心</dd>
+        </a>
+    </dl>
+</div>
+<p class="h99"></p>
+<!--/尾部浮动导航 -->
+
+<!--返回顶部 -->
+<a href="javascript:;" class="gotop"></a>
+<!--/返回顶部 -->
+
+<script>
+  getCartCount();
+  function getCartCount(){
+			 	$.ajax({
+			  		url : "/wxkkg/cart/get-count",
+			  		datatype:'json',
+			  		success : function(data)
+			  		{
+			  			kkcart.criticalSetCartCount(data.count);
+			  		}
+			  	});
+  }
+
+  function addGoodsToCart(goodsid,spec,qty,act_id){
+	  kkcart.addItemUrl= '/wxkkg/cart/ajax-add-item';
+		kkcart.addItem(goodsid,spec, qty , act_id,kkcart.criticalAfterAddGoodsToCart);
+	}
+  </script></body>
+</html>
